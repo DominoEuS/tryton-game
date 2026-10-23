@@ -1,0 +1,8 @@
+# narzędzia i śmieci systemowe
+node_modules/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# katalog roboczy makiet z sesji brainstormingowej
+.superpowers/
