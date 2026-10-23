@@ -11,22 +11,47 @@
 
   /* Wiek startowy składu Trytona. Klucz to nazwisko i imię tak, jak w danych
      z Tournify; reszta drużyny dostaje wartość spod 'default'. */
+  /* ---------- punkt startowy Trytona ---------- */
+
   const START_AGES = {
     default: 18
   };
 
-  /* Cała drużyna zaczyna jako uniwersalni — jak na amatorskim parkiecie, gdzie
-     nikt nie jest przypisany do jednej roli. Pozycje rozchodzą się dopiero
-     w edytorze i przez rozwój. */
+  /* Drużyna zaczyna jako uniwersalni — jak na amatorskim parkiecie, gdzie nikt
+     nie jest przypisany do jednej roli. Wyjątkiem jest bramkarz, bo bez niego
+     zespół traci po kilkanaście bramek na mecz. */
   const START_POSITION = 'UNI';
+  const START_POSITIONS = {
+    'OSSOWSKI FILIP': 'BR'
+  };
 
-  function applyStartAges(team, rng) {
+  /* Poziom wyjściowy wyższy niż typowa 4 Liga (8.6) — Tryton ma się bić o górę
+     tabeli, a nie być chłopcem do bicia. */
+  const START_BASE = 9.6;
+  const START_BASE_KEEPER = 11.4;
+
+  /* Minimalne wartości dla zawodnika postawionego w bramce. */
+  const KEEPER_FLOOR = {
+    handling: 15, reflexes: 15, positioning: 14, anticipation: 13, agility: 13
+  };
+
+  function applyTrytonStart(team, rng) {
     team.squad.forEach(player => {
-      const age = START_AGES[player.name.toUpperCase()] || START_AGES.default;
-      player.position = START_POSITION;
+      const key = player.name.toUpperCase();
+      const position = START_POSITIONS[key] || START_POSITION;
+      const age = START_AGES[key] || START_AGES.default;
+      const base = position === 'BR' ? START_BASE_KEEPER : START_BASE;
+
+      player.position = position;
       player.age = age;
-      player.attributes = C.applyAgeShape(
-        C.makeAttributes(rng, C.leagueBase(team.league), player.position), age);
+      player.attributes = C.applyAgeShape(C.makeAttributes(rng, base, position), age);
+
+      if (position === 'BR') {
+        Object.keys(KEEPER_FLOOR).forEach(attr => {
+          player.attributes[attr] = Math.max(player.attributes[attr], KEEPER_FLOOR[attr]);
+        });
+      }
+
       player.ovr = C.overall(player);
       /* osiemnastolatek musi mieć dokąd rosnąć, inaczej zostałby słaby na zawsze */
       if (age <= 20) {
@@ -54,7 +79,7 @@
         squad: C.buildSquad(entry, rng)
       };
     });
-    if (teams[data.homeTeamId]) applyStartAges(teams[data.homeTeamId], rng);
+    if (teams[data.homeTeamId]) applyTrytonStart(teams[data.homeTeamId], rng);
 
     /* mecze, które w prawdziwej lidze już się odbyły, wchodzą do gry z wynikiem */
     const fixtures = data.fixtures.map((f, index) => {
