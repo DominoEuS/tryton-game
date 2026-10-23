@@ -6,3 +6,6 @@ desktop.ini
 
 # katalog roboczy makiet z sesji brainstormingowej
 .superpowers/
+
+# katalog do wrzucenia na hosting, składany komendą node tools/build-dist.js
+dist/
